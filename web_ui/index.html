@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self' https:; base-uri 'none'; form-action 'self'">
+  <meta name="description" content="Приватна панель керування ботом Очима Розвідки">
+  <title>Очима Розвідки · Панель керування</title>
+  <link rel="stylesheet" href="style.css"><script src="config.js" defer></script><script src="app.js" defer></script>
+</head>
+<body>
+  <section id="login" class="login-shell" hidden>
+    <div class="login-art"><div class="wordmark"><span class="brand-icon">◉</span> ОЧИМА РОЗВІДКИ</div><div><p class="eyebrow">ВАШ КАНАЛ. ВАША КОМАНДА.</p><h1>Усе керування.<br>Один простір.</h1><p class="muted">Новини, шаблони й публікації —<br>поруч, коли вони потрібні.</p></div><span class="small muted">Приватна панель інформаційного каналу</span></div>
+    <div class="login-form"><div class="login-card"><span class="tag">ДЛЯ КОМАНДИ</span><h2>З поверненням</h2><p class="muted">Увійдіть через Telegram-акаунт, якому надано доступ до бота.</p><label>Адреса сервера бота<input id="server-url" type="url" placeholder="https://адреса-вашого-сервера" autocomplete="url"></label><p class="small muted">Якщо панель відкрита на серверному ПК, адреса підставиться автоматично.</p><button id="login-button" class="primary full">↗ Увійти через Telegram</button><p id="login-error" class="error" role="alert"></p><button id="demo-button" class="link full">Подивитися демонстрацію</button><p class="small muted">Вхід не надає доступу до ваших особистих чатів.</p></div></div>
+  </section>
+  <div id="workspace" class="workspace" hidden>
+    <aside class="sidebar"><a class="wordmark" href="#"><span class="brand-icon">◉</span><span>ОЧИМА<br>РОЗВІДКИ</span></a><p class="nav-caption">РОБОЧИЙ ПРОСТІР</p><nav aria-label="Головне меню">
+      <button data-nav="overview" class="active"><span>▦</span> Огляд</button>
+      <button data-nav="posts"><span>▤</span> Публікації</button>
+      <button data-nav="templates"><span>▧</span> Шаблони</button>
+      <button data-nav="tickets"><span>◫</span> Звернення</button>
+      <button data-nav="sources" class="admin-only"><span>◌</span> Джерела</button>
+      <button data-nav="help"><span>ⓘ</span> Як користуватися</button>
+    </nav><div class="sidebar-bottom"><div class="server-card"><span class="dot"></span><div><b id="connection-label">Панель підключена</b><small>Дані вашого бота</small></div></div><button id="logout" class="quiet">↪ Вийти</button></div></aside>
+    <main><header class="topbar"><span>Панель керування <span class="breadcrumb">/ <span id="crumb">Огляд</span></span></span><div class="user-pill"><span id="avatar">Р</span><div><b id="user-name">Редактор</b><small id="user-role">Адміністратор</small></div></div></header>
+      <div id="demo-banner" class="demo-banner" hidden>Демонстрація · Приклад даних. Бот і канал не змінюються.</div>
+      <div class="content"><section class="page-heading"><div><p id="page-eyebrow" class="eyebrow">УСЕ ПІД КОНТРОЛЕМ</p><h1 id="page-title">Огляд роботи</h1><p id="page-description" class="muted">Головне про ваш канал в одному місці.</p></div><button id="new-post" class="primary">＋ Створити допис</button></section>
+      <div id="view"></div></div><footer>Очима Розвідки <span>Панель команди · v1</span></footer>
+    </main>
+  </div>
+  <dialog id="editor"><form id="editor-form"><div class="dialog-heading"><div><p id="editor-type" class="eyebrow">РЕДАКТОР ПУБЛІКАЦІЇ</p><h2 id="editor-heading">Новий допис</h2></div><button type="button" id="close-editor" class="icon-button" aria-label="Закрити">×</button></div>
+    <div class="editor-grid"><div><label id="template-title-label" hidden>Назва шаблону<input id="template-title" maxlength="60"></label><label>Текст повідомлення<textarea id="body-text" rows="9" placeholder="Напишіть вашу новину…"></textarea></label><div class="editor-subrow"><span class="small muted">Текст зберігається у вибраний канал</span><span id="character-count" class="small muted">0 символів</span></div><label class="upload-area">＋ Додати фото або відео<input type="file" id="media-upload" accept="image/jpeg,image/png,video/mp4" multiple hidden></label><div id="media-list"></div><details><summary>Підписи, кнопки та звук</summary><label>Підпис зверху<input id="post-header" maxlength="300"></label><label>Підпис знизу<input id="post-footer" maxlength="300"></label><label>Кнопки-посилання<textarea id="post-buttons" rows="3" placeholder="Канал | https://t.me/ваш_канал"></textarea></label><label class="checkbox"><input id="post-silent" type="checkbox"> Надіслати без звуку</label></details><div id="schedule-fields" hidden><label>Дата та час за Києвом<input type="datetime-local" id="post-date"></label></div></div>
+    <div class="preview-wrap"><p class="eyebrow">ПОПЕРЕДНІЙ ПЕРЕГЛЯД</p><div class="telegram-preview"><div class="preview-channel" id="preview-channel">Ваш канал</div><div id="preview-text" class="preview-text">Тут з’явиться ваш допис.</div><div class="preview-time">Щойно · попередній перегляд</div></div><p class="small muted">Текст показано без форматування. Незмінене форматування наявного допису зберігається під час редагування налаштувань.</p><p id="editor-error" class="error" role="alert"></p></div></div>
+    <div class="dialog-actions"><button type="button" id="save-template" class="quiet">Зберегти як шаблон</button><div><button type="submit" id="save-draft" class="secondary">Зберегти чернетку</button><button type="button" id="schedule-post" class="secondary admin-only">Запланувати</button><button type="button" id="publish-post" class="primary">Опублікувати зараз</button></div></div>
+  </form></dialog>
+  <dialog id="confirm-dialog"><form method="dialog"><h2 id="confirm-title">Підтвердіть дію</h2><p id="confirm-message" class="muted"></p><div class="confirm-actions"><button value="cancel" class="secondary">Скасувати</button><button value="ok" class="danger">Видалити</button></div></form></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body></html>

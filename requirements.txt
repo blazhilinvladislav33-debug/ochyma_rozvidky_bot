@@ -1,0 +1,5 @@
+aiogram==3.31.0
+python-dotenv==1.2.4
+tzdata==2026.5
+Telethon==1.45.0
+PyJWT[crypto]==2.15.1
