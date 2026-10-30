@@ -1,0 +1,43 @@
+name: Publish bot panel
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Configure public API address
+        env:
+          PANEL_API_URL: ${{ vars.PANEL_API_URL }}
+        run: |
+          python - <<'PY'
+          import os, json
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          value = os.environ.get('PANEL_API_URL', '').rstrip('/')
+          if value:
+              parsed = urlsplit(value)
+              assert parsed.scheme == 'https' and parsed.hostname and not parsed.username and not parsed.password and parsed.path in ('', '/') and not parsed.query and not parsed.fragment, 'PANEL_API_URL must be an HTTPS origin'
+          Path('web_ui/config.js').write_text('window.PANEL_CONFIG = ' + json.dumps({'apiBase': value}) + ';\n')
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web_ui
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
