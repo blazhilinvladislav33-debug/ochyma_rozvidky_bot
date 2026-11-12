@@ -6,16 +6,21 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self' https:; base-uri 'none'; form-action 'self'">
   <meta name="description" content="Приватна панель керування ботом Очима Розвідки">
   <title>Очима Розвідки · Панель керування</title>
+  <meta name="theme-color" content="#111827">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png" type="image/png">
   <link rel="stylesheet" href="style.css"><script src="config.js" defer></script><script src="app.js" defer></script>
 </head>
 <body>
   <section id="login" class="login-shell" hidden>
     <div class="login-art"><div class="wordmark"><span class="brand-icon">◉</span> ОЧИМА РОЗВІДКИ</div><div><p class="eyebrow">ВАШ КАНАЛ. ВАША КОМАНДА.</p><h1>Усе керування.<br>Один простір.</h1><p class="muted">Новини, шаблони й публікації —<br>поруч, коли вони потрібні.</p></div><span class="small muted">Приватна панель інформаційного каналу</span></div>
     <div class="login-form"><div class="login-card"><span class="tag">ДЛЯ КОМАНДИ</span><h2>З поверненням</h2><p class="muted">Увійдіть через Telegram-акаунт, якому надано доступ до бота.</p><label>Адреса сервера бота<input id="server-url" type="url" placeholder="https://адреса-вашого-сервера" autocomplete="url"></label><p class="small muted">Якщо панель відкрита на серверному ПК, адреса підставиться автоматично.</p><button id="login-button" class="primary full">↗ Увійти через Telegram</button><p id="login-error" class="error" role="alert"></p><button id="demo-button" class="link full">Подивитися демонстрацію</button><p class="small muted">Вхід не надає доступу до ваших особистих чатів.</p></div></div>
+    <div class="install-bar login-install" hidden><button type="button" class="secondary" data-install>Встановити панель</button></div>
   </section>
   <div id="workspace" class="workspace" hidden>
     <aside class="sidebar"><a class="wordmark" href="#"><span class="brand-icon">◉</span><span>ОЧИМА<br>РОЗВІДКИ</span></a><p class="nav-caption">РОБОЧИЙ ПРОСТІР</p><nav aria-label="Головне меню">
       <button data-nav="overview" class="active"><span>▦</span> Огляд</button>
+      <button data-nav="responses"><span>▸</span> Швидкі відповіді</button>
       <button data-nav="posts"><span>▤</span> Публікації</button>
       <button data-nav="templates"><span>▧</span> Шаблони</button>
       <button data-nav="tickets"><span>◫</span> Звернення</button>
@@ -23,6 +28,7 @@
       <button data-nav="help"><span>ⓘ</span> Як користуватися</button>
     </nav><div class="sidebar-bottom"><div class="server-card"><span class="dot"></span><div><b id="connection-label">Панель підключена</b><small>Дані вашого бота</small></div></div><button id="logout" class="quiet">↪ Вийти</button></div></aside>
     <main><header class="topbar"><span>Панель керування <span class="breadcrumb">/ <span id="crumb">Огляд</span></span></span><div class="user-pill"><span id="avatar">Р</span><div><b id="user-name">Редактор</b><small id="user-role">Адміністратор</small></div></div></header>
+      <div class="install-bar" hidden><button type="button" class="secondary" data-install>Встановити панель</button></div>
       <div id="demo-banner" class="demo-banner" hidden>Демонстрація · Приклад даних. Бот і канал не змінюються.</div>
       <div class="content"><section class="page-heading"><div><p id="page-eyebrow" class="eyebrow">УСЕ ПІД КОНТРОЛЕМ</p><h1 id="page-title">Огляд роботи</h1><p id="page-description" class="muted">Головне про ваш канал в одному місці.</p></div><button id="new-post" class="primary">＋ Створити допис</button></section>
       <div id="view"></div></div><footer>Очима Розвідки <span>Панель команди · v1</span></footer>

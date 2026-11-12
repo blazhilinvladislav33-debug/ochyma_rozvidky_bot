@@ -15,13 +15,57 @@ const demo={counts:{draft:3,review:2,scheduled:4,published:28},paused:false,targ
   {id:22,body_text:'Оголошення для підписників нашого каналу.',status:'published',media:[],buttons:[]},
   {id:21,body_text:'Дякуємо за вашу підтримку та небайдужість.',status:'draft',media:[],buttons:[]}].map(p=>({...p,revision:0,header:'',footer:'',silent:0,target_title:'Очима Розвідки',created:new Date().toISOString()})),templates:[{id:1,title:'Повідомлення читача',body_text:'Нам пишуть:\n\nТекст повідомлення читача.',header:'',footer:'',media:[],buttons:[],revision:0},{id:2,title:'Оголошення громади',body_text:'Оголошення\n\nДодайте перевірені місце, дату й час події.',header:'',footer:'',media:[],buttons:[],revision:0}]};
 
+titles.responses=['','Швидкі відповіді','Оберіть категорію та текст для чернетки.'];
+
+const responseGroups = [
+  {
+    id: 'aviation',
+    title: 'Активність авіації',
+    items: [
+      ['Загальне повідомлення', 'Є повідомлення про активність авіації. Стежте за офіційними сповіщеннями.'],
+      ['Дані уточнюються', 'Інформацію уточнюємо. Орієнтуйтеся на офіційні сповіщення.'],
+      ['Нагадування про безпеку', 'Якщо у вашій громаді оголошено повітряну тривогу, прямуйте до укриття.'],
+    ],
+  },
+  {
+    id: 'kab',
+    title: 'КАБ',
+    items: [
+      ['Нагадати про укриття', 'Під час повітряної тривоги прямуйте до найближчого укриття.'],
+      ['Дані уточнюються', 'Інформацію уточнюємо. Стежте за офіційними сповіщеннями.'],
+      ['Дочекатися відбою', 'Залишайтеся в укритті до офіційного відбою повітряної тривоги.'],
+    ],
+  },
+  {
+    id: 'safety',
+    title: 'Цивільна безпека',
+    items: [
+      ['Нагадати про укриття', 'Під час повітряної тривоги перебувайте в укритті до офіційного відбою.'],
+      ['Стежити за сповіщеннями', 'Стежте за офіційними сповіщеннями вашої громади.'],
+    ],
+  },
+  {
+    id: 'community',
+    title: 'Оголошення громади',
+    items: [
+      ['Очікуємо уточнення', 'Очікуємо на уточнення від громади. Повідомимо, щойно з’явиться підтверджена інформація.'],
+      ['Оновлення до оголошення', 'Оновлення до попереднього оголошення.'],
+    ],
+  },
+];
+
 function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
 function button(text,cls,fn){const n=el('button',cls,text);n.type='button';n.addEventListener('click',()=>safe(fn));return n;}
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,4500);}
 async function safe(fn){try{await fn();}catch(e){toast(e.message||'Не вдалося виконати дію.');}}
+function authHeaders(){
+  const headers={Authorization:'Bearer '+state.token};
+  if(apiBase&&/(^|\.)ngrok(-free)?\.(app|dev|io)$/.test(new URL(apiBase).hostname))headers['ngrok-skip-browser-warning']='1';
+  return headers;
+}
 async function request(path,method='GET',data){
   if(!apiBase)throw Error('Спершу вкажіть адресу сервера бота.');
-  const headers={Authorization:'Bearer '+state.token};
+  const headers=authHeaders();
   if(data!==undefined)headers['Content-Type']='application/json';
   let response;
   try{response=await fetch(apiBase+'/api/'+path,{method,headers,body:data===undefined?undefined:JSON.stringify(data),cache:'no-store',redirect:'error',credentials:'omit'});}catch{throw Error('Немає зв’язку із сервером. Перевірте адресу та роботу серверного ПК.');}
@@ -51,6 +95,10 @@ async function navigate(view){
     if(view==='overview')await renderOverview();
     else if(view==='posts')await renderPosts();
     else if(view==='templates')await renderTemplates();
+    else if(view==='responses'){
+      state.responseButtons=state.demo?(demo.responseButtons||{}):await request('response-buttons');
+      if(state.view==='responses')renderResponses();
+    }
     else if(view==='sources')await renderSources();
     else if(view==='tickets')await renderTickets();
     else renderHelp();
@@ -68,6 +116,44 @@ function postTable(items){
 async function getPosts(status='all',page=0){if(state.demo){const items=demo.posts.filter(p=>status==='all'||p.status===status);return {items,total:items.length,page:0};}return request('posts?status='+encodeURIComponent(status)+'&page='+page);}
 async function renderOverview(){
   const data=await overview(),view=el('div'),stats=el('div','stats-grid');
+  const mode=el('section','box box-pad publication-mode');
+  mode.append(el('h3','','Режим публікацій'));
+  if(isAdmin()){
+    const controls=el('div','mode-controls');
+    controls.setAttribute('role','group');
+    controls.setAttribute('aria-label','Режим публікацій');
+    const choices=[];
+    for(const [label,automatic] of [['Швидкі відповіді',false],['Автоматично',true]]){
+      const selected=Boolean(data.automatic)===automatic;
+      const choice=button(label,selected?'primary':'secondary',async()=>{
+        if(selected) return;
+        choices.forEach(item=>{item.disabled=true;});
+        try{
+          if(state.demo) demo.automatic=automatic;
+          else await request('publication-mode','POST',{automatic});
+          if(state.view==='overview') await navigate('overview');
+        }finally{
+          choices.forEach(item=>{item.disabled=false;});
+        }
+      });
+      choice.setAttribute('aria-pressed',String(selected));
+      choices.push(choice);
+      controls.append(choice);
+    }
+    mode.append(controls);
+  }else{
+    mode.append(el('p','muted',data.automatic?'Автоматично':'Швидкі відповіді'));
+  }
+  view.append(mode);
+  const system=el('section','box box-pad system-status');
+  const reader=el('div'),publishing=el('div');
+  reader.append(el('h3','','Читання Telegram'),el('p','muted',data.reader_status||'Немає даних'));
+  publishing.append(el('h3','','Публікації'),el('p',data.paused?'status-paused':'status-active',data.paused?'На паузі':'Черга активна'));
+  const ai=el('div');
+  ai.append(el('h3','','ШІ-аналіз'),el('p','muted','Не підключено'));
+  system.append(reader,publishing,ai);
+  if(isAdmin())system.append(button('Джерела Telegram','secondary',()=>navigate('sources')));
+  view.append(system);
   for(const [key,name,note,icon] of [['published','Опубліковано','Дописи у вашому каналі','↗'],['scheduled','Заплановано','Очікують свого часу','◷'],['review','На погодженні','Потребують уваги команди','◉'],['draft','Чернетки','Ідеї для наступних дописів','▤']]){
     const box=el('div','stat'),title=el('div','stat-title',name);title.append(el('span','',icon));box.append(title,el('div','stat-value',String(data.counts[key]||0)),el('div','stat-note',note));stats.append(box);
   }view.append(stats);
@@ -78,7 +164,9 @@ async function renderOverview(){
   const quick=el('section','box box-pad');quick.append(el('h3','section-title','Швидкий старт'));
   for(const [icon,title,desc,fn] of [['＋','Створити публікацію','Текст, фото або відео',()=>openEditor()],['▧','Використати шаблон','Почніть зі збереженого оформлення',()=>navigate('templates')]]){
     const b=button('','shortcut',fn),d=el('div');d.append(el('b','',title),el('small','',desc));b.append(el('span','',icon),d,el('span','arrow','↗'));quick.append(b);
-  }grid.append(channel,quick);view.append(grid);
+  }
+  quick.append(button('Швидкі відповіді','secondary',()=>navigate('responses')));
+  grid.append(channel,quick);view.append(grid);
   const recent=el('section','box'),rh=el('div','table-heading');rh.append(el('h3','','Останні публікації'),button('Усі дописи ↗','quiet',()=>{state.status='all';state.page=0;return navigate('posts');}));recent.append(rh);
   const posts=await getPosts();recent.append(posts.items.length?postTable(posts.items.slice(0,5)):empty('Ще немає дописів','Створіть першу публікацію для свого каналу.'));view.append(recent);$('view').replaceChildren(view);
 }
@@ -151,18 +239,84 @@ async function pollConversation(){
 async function loadOlderMessages(){if(state.demo)return;const id=state.ticketId,messages=$('chat-messages'),first=state.ticketMessages[0]?.id;if(!first)return;const data=await request(`tickets/${id}?before=${first}`);if(state.view!=='tickets'||state.ticketId!==id)return;const oldHeight=messages.scrollHeight;const load=messages.querySelector('.load-older');if(load)load.remove();appendMessages(messages,data.messages,true);state.ticketMessages.unshift(...data.messages);if(data.older)messages.prepend(button('Завантажити попередні','quiet load-older',loadOlderMessages));messages.scrollTop=messages.scrollHeight-oldHeight;await markTicketRead(data.messages);}
 function updateReplyAvailability(){const closed=state.currentTicket.status==='closed',disabled=closed||state.ticketBlocked;const body=$('reply-body'),send=$('send-reply');if(!body||!send)return;body.disabled=disabled;send.disabled=disabled||state.replySending||state.replyUploading;if($('ticket-toggle'))$('ticket-toggle').textContent=closed?'Відкрити':'Закрити';if($('ticket-working'))$('ticket-working').disabled=closed;$('reply-notice').textContent=state.ticketBlocked?'Користувача заблоковано. Відповіді недоступні.':closed?'Звернення закрите. Відкрийте його, щоб відповісти.':ticketLabels[state.currentTicket.status]+' · Повідомлення надходять автоматично';}
 async function setTicketStatus(status){const id=state.ticketId;if(state.demo){toast('Демонстрація: стан не змінювався');return;}await request(`tickets/${id}/status`,'POST',{status,expected:state.currentTicket.status});await openTicket(id);}
-async function uploadReply(input){if(!input.files.length)return;state.replyUploading=true;updateReplyAvailability();try{if(state.demo){toast('Демонстрація: файл не завантажувався');return;}const form=new FormData();form.append('file',input.files[0]);const response=await fetch(apiBase+'/api/upload',{method:'POST',headers:{Authorization:'Bearer '+state.token},body:form,credentials:'omit',redirect:'error'});const data=await response.json();if(!response.ok)throw Error(data.error);state.replyMedia=[data];state.replyOperation=null;$('reply-attachment').textContent='Вкладення додано';}finally{state.replyUploading=false;updateReplyAvailability();}}
+async function uploadReply(input){if(!input.files.length)return;state.replyUploading=true;updateReplyAvailability();try{if(state.demo){toast('Демонстрація: файл не завантажувався');return;}const form=new FormData();form.append('file',input.files[0]);const response=await fetch(apiBase+'/api/upload',{method:'POST',headers:authHeaders(),body:form,credentials:'omit',redirect:'error'});const data=await response.json();if(!response.ok)throw Error(data.error);state.replyMedia=[data];state.replyOperation=null;$('reply-attachment').textContent='Вкладення додано';}finally{state.replyUploading=false;updateReplyAvailability();}}
 async function sendReply(){if(state.replySending||state.replyUploading)return;const body=$('reply-body').value;if(!body.trim()&&!state.replyMedia.length)return;if(state.demo){toast('Демонстрація: користувачу нічого не надсилалося');return;}state.replySending=true;updateReplyAvailability();try{state.replyOperation=state.replyOperation||crypto.randomUUID();await request(`tickets/${state.ticketId}/reply`,'POST',{body,media:state.replyMedia,operation:state.replyOperation});$('reply-body').value='';state.replyMedia=[];state.replyOperation=null;$('reply-attachment').textContent='';await pollConversation();await refreshTickets();toast('Відповідь доставлено');}finally{state.replySending=false;updateReplyAvailability();}}
-async function getAttachment(message){if(state.demo){toast('Демонстрація: вкладень немає');return;}if(!message.has_media){await request(`tickets/${state.ticketId}/messages/${message.id}/forward`,'POST',{});toast('Вкладення надіслано вам у Telegram-бота');return;}const response=await fetch(`${apiBase}/api/tickets/${state.ticketId}/messages/${message.id}/attachment`,{headers:{Authorization:'Bearer '+state.token},credentials:'omit',redirect:'error'});if(!response.ok){const data=await response.json();throw Error(data.error);}const blob=await response.blob(),url=URL.createObjectURL(blob),a=el('a');a.href=url;const header=response.headers.get('Content-Disposition')||'';a.download=header.match(/filename="([^"]+)"/)?.[1]||'attachment';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
+async function getAttachment(message){if(state.demo){toast('Демонстрація: вкладень немає');return;}if(!message.has_media){await request(`tickets/${state.ticketId}/messages/${message.id}/forward`,'POST',{});toast('Вкладення надіслано вам у Telegram-бота');return;}const response=await fetch(`${apiBase}/api/tickets/${state.ticketId}/messages/${message.id}/attachment`,{headers:authHeaders(),credentials:'omit',redirect:'error'});if(!response.ok){const data=await response.json();throw Error(data.error);}const blob=await response.blob(),url=URL.createObjectURL(blob),a=el('a');a.href=url;const header=response.headers.get('Content-Disposition')||'';a.download=header.match(/filename="([^"]+)"/)?.[1]||'attachment';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 
 function preview(){const text=[$('post-header').value,$('body-text').value,$('post-footer').value].filter(Boolean).join('\n\n');$('preview-text').textContent=text||'Тут з’явиться ваш допис.';$('character-count').textContent=$('body-text').value.length+' символів';}
 function mediaList(){const list=$('media-list');list.replaceChildren();state.editor.media.forEach((m,i)=>{const row=el('div','media-item');row.append(el('span','',`${m.kind==='photo'?'▧ Фото':'▷ Відео'} ${i+1}`));if(!state.editor.readonly)row.append(button('×','',()=>{state.editor.media.splice(i,1);mediaList();}));list.append(row);});}
 async function openPost(post){if(!state.demo)post=await request('posts/'+post.id);return openEditor(post,false);}
-async function openEditor(post=null,template=false){
+function renderResponses(group=null){
+  const section=el('section','box box-pad response-picker');
+  if(group) section.append(button('← Усі категорії','quiet',()=>renderResponses()));
+  section.append(el('h2','',group?.title||'Категорії'));
+  const grid=el('div','response-grid');
+  if(group){
+    for(const [label,body] of [...group.items,...(state.responseButtons?.[group.id]||[])]){
+      grid.append(button(label,'secondary',()=>openEditor(null,false,body)));
+    }
+  }else{
+    for(const item of responseGroups){
+      grid.append(button(item.title,'secondary',()=>renderResponses(item)));
+    }
+  }
+  section.append(grid);
+  if(group&&isAdmin())section.append(responseButtonForm(group));
+  $('view').replaceChildren(section);
+}
+
+function responseButtonForm(group){
+  const details=el('details');
+  details.append(el('summary','','＋ Додати кнопку'));
+  const form=el('form');
+  const nameLabel=el('label','','Назва кнопки');
+  const name=el('input');
+  name.required=true;
+  name.maxLength=60;
+  nameLabel.append(name);
+  const bodyLabel=el('label','','Текст для чернетки');
+  const body=el('textarea');
+  body.required=true;
+  body.maxLength=4000;
+  body.rows=4;
+  bodyLabel.append(body);
+  const save=el('button','primary','Зберегти кнопку');
+  save.type='submit';
+  form.append(nameLabel,bodyLabel,save);
+  form.addEventListener('submit',event=>{
+    event.preventDefault();
+    safe(async()=>{
+      const label=name.value.trim();
+      const text=body.value.trim();
+      if(!label||!text)throw Error('Заповніть назву і текст кнопки.');
+      const entries=state.responseButtons[group.id]||[];
+      if([...group.items,...entries].some(([value])=>value.toLocaleLowerCase()===label.toLocaleLowerCase())){
+        throw Error('Кнопка з такою назвою вже є.');
+      }
+      save.disabled=true;
+      try{
+        if(state.demo){
+          demo.responseButtons={...state.responseButtons,[group.id]:[...entries,[label,text]]};
+          state.responseButtons=demo.responseButtons;
+        }else{
+          state.responseButtons=await request('response-buttons','POST',{group:group.id,label,body:text});
+        }
+        if(details.isConnected&&state.view==='responses')renderResponses(group);
+        toast('Кнопку додано');
+      }finally{
+        save.disabled=false;
+      }
+    });
+  });
+  details.append(form);
+  return details;
+}
+
+async function openEditor(post=null,template=false,initialBody=''){
   if(!state.overview)await overview();
   state.editor={post,template,media:structuredClone(post?.media||[]),readonly:!!post&&!template&&!['draft','review','failed'].includes(post.status)};
   const read=state.editor.readonly;$('editor-heading').textContent=template?'Редагувати шаблон':post?`Допис №${post.id||'новий'}`:'Новий допис';$('editor-type').textContent=template?'БІБЛІОТЕКА ШАБЛОНІВ':'РЕДАКТОР ПУБЛІКАЦІЇ';
-  $('template-title-label').hidden=!template;$('template-title').value=post?.title||'';$('body-text').value=post?.body_text||'';$('post-header').value=post?.header||'';$('post-footer').value=post?.footer||'';$('post-silent').checked=!!post?.silent;
+  $('template-title-label').hidden=!template;$('template-title').value=post?.title||'';$('body-text').value=post?.body_text??initialBody;$('post-header').value=post?.header||'';$('post-footer').value=post?.footer||'';$('post-silent').checked=!!post?.silent;
   $('post-buttons').value=(post?.buttons||[]).map(b=>b.text+' | '+b.url).join('\n');$('preview-channel').textContent=state.overview.target;$('schedule-fields').hidden=true;$('post-date').value='';$('editor-error').textContent=post?.error||'';
   $('save-draft').textContent=template?'Зберегти шаблон':'Зберегти чернетку';$('save-draft').hidden=read;$('publish-post').hidden=template||read;$('schedule-post').hidden=template||read||!isAdmin();$('save-template').hidden=template;
   $('media-upload').disabled=read;for(const id of ['body-text','post-header','post-footer','post-buttons','post-silent'])$(id).disabled=read;
@@ -181,15 +335,43 @@ async function editorAction(action){if(state.busy)return;busy(true);$('editor-er
   if(action==='schedule'&&$('schedule-fields').hidden){$('schedule-fields').hidden=false;$('post-date').focus();return;}
   let when;if(action==='schedule'){const value=$('post-date').value;if(!value)throw Error('Виберіть дату й час за Києвом.');const [d,t]=value.split('T');const [y,m,day]=d.split('-');when=`${day}.${m}.${y} ${t}`;}
   const saved=await saveEditor();
-  if(action!=='save'&&saved){if(!state.demo)await request(`posts/${saved.id}/${action}`,'POST',{revision:saved.revision,...(when?{when}:{})});}
-  $('editor').close();toast(state.demo?'Демонстрація: дію показано без зміни бота':action==='publish'?'Допис у черзі на публікацію':action==='submit'?'Надіслано на погодження':action==='schedule'?'Публікацію заплановано':'Зміни збережено');await navigate(state.view);
+  if(action!=='save'&&saved&&!state.demo){
+    const result=await request(`posts/${saved.id}/${action}`,'POST',{revision:saved.revision,...(when?{when}:{})});
+    if(action==='publish'&&result.status!=='published'){
+      state.editor.post=result;
+      state.editor.readonly=!['draft','review','failed'].includes(result.status);
+      throw Error(result.error||'Telegram ще не підтвердив публікацію. Перевірте допис у списку.');
+    }
+  }
+  $('editor').close();toast(state.demo?'Демонстрація: дію показано без зміни бота':action==='publish'?'Опубліковано в каналі':action==='submit'?'Надіслано на погодження':action==='schedule'?'Публікацію заплановано':'Зміни збережено');await navigate(state.view);
 }catch(e){$('editor-error').textContent=e.message;}finally{busy(false);}}
 async function saveAsTemplate(){if(state.busy)return;const title=prompt('Назва шаблону (до 60 символів):');if(!title)return;busy(true);try{let post=state.editor.post;if(!state.editor.readonly)post=await saveEditor();if(!state.demo)await request(`posts/${post.id}/template`,'POST',{title,revision:post.revision});toast(state.demo?'Демонстрація: шаблон збережено':'Шаблон збережено');}catch(e){$('editor-error').textContent=e.message;}finally{busy(false);}}
 async function deleteTemplate(item){$('confirm-title').textContent='Видалити шаблон?';$('confirm-message').textContent=`«${item.title}». Створені з нього дописи залишаться.`;$('confirm-dialog').returnValue='';$('confirm-dialog').showModal();const result=await new Promise(resolve=>$('confirm-dialog').addEventListener('close',()=>resolve($('confirm-dialog').returnValue),{once:true}));if(result!=='ok')return;if(state.demo){toast('Демонстрація: шаблон не видалявся');return;}await request('templates/'+item.id,'DELETE',{revision:item.revision});toast('Шаблон видалено');await navigate('templates');}
-async function upload(){if(state.busy)return;const files=[...$('media-upload').files];if(!files.length)return;busy(true);try{for(const file of files){if(state.editor.media.length>=10)throw Error('Можна додати до 10 вкладень.');if(state.demo){state.editor.media.push({kind:file.type.startsWith('image/')?'photo':'video',file_id:'demo'});continue;}const form=new FormData();form.append('file',file);const response=await fetch(apiBase+'/api/upload',{method:'POST',headers:{Authorization:'Bearer '+state.token},body:form,credentials:'omit',redirect:'error'});const result=await response.json();if(!response.ok)throw Error(result.error);state.editor.media.push(result);}mediaList();}catch(e){$('editor-error').textContent=e.message;mediaList();}finally{$('media-upload').value='';busy(false);}}
+async function upload(){if(state.busy)return;const files=[...$('media-upload').files];if(!files.length)return;busy(true);try{for(const file of files){if(state.editor.media.length>=10)throw Error('Можна додати до 10 вкладень.');if(state.demo){state.editor.media.push({kind:file.type.startsWith('image/')?'photo':'video',file_id:'demo'});continue;}const form=new FormData();form.append('file',file);const response=await fetch(apiBase+'/api/upload',{method:'POST',headers:authHeaders(),body:form,credentials:'omit',redirect:'error'});const result=await response.json();if(!response.ok)throw Error(result.error);state.editor.media.push(result);}mediaList();}catch(e){$('editor-error').textContent=e.message;mediaList();}finally{$('media-upload').value='';busy(false);}}
 
 $('login-button').addEventListener('click',()=>{try{const url=new URL($('server-url').value.trim());if(url.username||url.password||url.search||url.hash||url.pathname!=='/'||!(url.protocol==='https:'||url.protocol==='http:'&&['127.0.0.1','localhost'].includes(url.hostname)))throw Error();apiBase=url.origin;localStorage.setItem('panel_api',apiBase);sessionStorage.removeItem('panel_session');location.assign(apiBase+'/auth/start');}catch{$('login-error').textContent='Вкажіть HTTPS-адресу сервера або http://127.0.0.1:8787 на серверному ПК.';}});
 $('demo-button').addEventListener('click',()=>{state.demo=true;state.user={name:'Олександр',role:'owner'};showWorkspace();safe(()=>navigate('overview'));});
+let installPrompt;
+const installButtons=[...document.querySelectorAll('[data-install]')];
+function showInstallButtons(visible){
+  installButtons.forEach(button=>{button.parentElement.hidden=!visible;});
+}
+window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();
+  installPrompt=event;
+  showInstallButtons(true);
+});
+window.addEventListener('appinstalled',()=>{
+  installPrompt=null;
+  showInstallButtons(false);
+});
+installButtons.forEach(button=>button.addEventListener('click',()=>safe(async()=>{
+  if(!installPrompt)return;
+  const prompt=installPrompt;
+  installPrompt=null;
+  showInstallButtons(false);
+  await prompt.prompt();
+})));
 $('logout').addEventListener('click',()=>safe(async()=>{if(!state.demo)await request('logout','POST',{});state.token='';sessionStorage.removeItem('panel_session');state.demo=false;state.overview=null;showLogin();}));
 document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>safe(()=>navigate(b.dataset.nav))));
 $('new-post').addEventListener('click',()=>safe(()=>openEditor()));$('close-editor').addEventListener('click',()=>{if(!state.busy)$('editor').close();});
