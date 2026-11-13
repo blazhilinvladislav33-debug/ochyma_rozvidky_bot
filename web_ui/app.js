@@ -246,7 +246,7 @@ async function getAttachment(message){if(state.demo){toast('Демонстрац
 function preview(){const text=[$('post-header').value,$('body-text').value,$('post-footer').value].filter(Boolean).join('\n\n');$('preview-text').textContent=text||'Тут з’явиться ваш допис.';$('character-count').textContent=$('body-text').value.length+' символів';}
 function mediaList(){const list=$('media-list');list.replaceChildren();state.editor.media.forEach((m,i)=>{const row=el('div','media-item');row.append(el('span','',`${m.kind==='photo'?'▧ Фото':'▷ Відео'} ${i+1}`));if(!state.editor.readonly)row.append(button('×','',()=>{state.editor.media.splice(i,1);mediaList();}));list.append(row);});}
 async function openPost(post){if(!state.demo)post=await request('posts/'+post.id);return openEditor(post,false);}
-function renderResponses(group=null){
+function renderResponses(group=null,editIndex=null,manageOpen=false){
   const section=el('section','box box-pad response-picker');
   if(group) section.append(button('← Усі категорії','quiet',()=>renderResponses()));
   section.append(el('h2','',group?.title||'Категорії'));
@@ -261,24 +261,79 @@ function renderResponses(group=null){
     }
   }
   section.append(grid);
-  if(group&&isAdmin())section.append(responseButtonForm(group));
+  if(group&&isAdmin()){
+    const entries=state.responseButtons[group.id]||[];
+    if(entries.length){
+      const manage=el('details');
+      manage.open=manageOpen||editIndex!==null;
+      manage.append(el('summary','','Керувати власними кнопками'));
+      entries.forEach(([label],index)=>{
+        const row=el('div','response-manage-row');
+        const up=button('↑','secondary',()=>changeResponseButton(group,'PUT',index,{direction:-1},section,entries));
+        const down=button('↓','secondary',()=>changeResponseButton(group,'PUT',index,{direction:1},section,entries));
+        up.disabled=index===0;
+        down.disabled=index===entries.length-1;
+        up.setAttribute('aria-label','Перемістити вгору: '+label);
+        down.setAttribute('aria-label','Перемістити вниз: '+label);
+        row.append(el('b','',label),up,down,
+          button('Редагувати','secondary',()=>renderResponses(group,index)),
+          button('Видалити','quiet',()=>{
+            if(window.confirm('Видалити кнопку «'+label+'»?')){
+              return changeResponseButton(group,'DELETE',index,{},section,entries);
+            }
+          }));
+        manage.append(row);
+      });
+      section.append(manage);
+    }
+    section.append(responseButtonForm(group,editIndex));
+  }
   $('view').replaceChildren(section);
 }
 
-function responseButtonForm(group){
+async function changeResponseButton(group,method,index,fields,element,expected){
+  if(state.responseButtonSaving)return;
+  state.responseButtonSaving=true;
+  try{
+    if(state.demo){
+      const entries=[...expected];
+      if(method==='DELETE')entries.splice(index,1);
+      else if(fields.direction){
+        const other=index+fields.direction;
+        [entries[index],entries[other]]=[entries[other],entries[index]];
+      }else if(method==='PUT')entries[index]=[fields.label,fields.body];
+      else entries.push([fields.label,fields.body]);
+      demo.responseButtons={...state.responseButtons,[group.id]:entries};
+      state.responseButtons=demo.responseButtons;
+    }else{
+      state.responseButtons=await request('response-buttons',method,{group:group.id,index,expected,...fields});
+    }
+    if(element.isConnected&&state.view==='responses')renderResponses(group,null,method!=='POST');
+    toast('Зміни збережено');
+  }finally{
+    state.responseButtonSaving=false;
+  }
+}
+
+function responseButtonForm(group,editIndex){
   const details=el('details');
-  details.append(el('summary','','＋ Додати кнопку'));
+  const entries=state.responseButtons[group.id]||[];
+  const entry=editIndex===null?null:entries[editIndex];
+  details.open=Boolean(entry);
+  details.append(el('summary','',entry?'Редагувати кнопку':'＋ Додати кнопку'));
   const form=el('form');
   const nameLabel=el('label','','Назва кнопки');
   const name=el('input');
   name.required=true;
   name.maxLength=60;
+  name.value=entry?.[0]||'';
   nameLabel.append(name);
   const bodyLabel=el('label','','Текст для чернетки');
   const body=el('textarea');
   body.required=true;
   body.maxLength=4000;
   body.rows=4;
+  body.value=entry?.[1]||'';
   bodyLabel.append(body);
   const save=el('button','primary','Зберегти кнопку');
   save.type='submit';
@@ -289,20 +344,12 @@ function responseButtonForm(group){
       const label=name.value.trim();
       const text=body.value.trim();
       if(!label||!text)throw Error('Заповніть назву і текст кнопки.');
-      const entries=state.responseButtons[group.id]||[];
-      if([...group.items,...entries].some(([value])=>value.toLocaleLowerCase()===label.toLocaleLowerCase())){
+      if([...group.items,...entries.filter((_,index)=>index!==editIndex)].some(([value])=>value.toLocaleLowerCase()===label.toLocaleLowerCase())){
         throw Error('Кнопка з такою назвою вже є.');
       }
       save.disabled=true;
       try{
-        if(state.demo){
-          demo.responseButtons={...state.responseButtons,[group.id]:[...entries,[label,text]]};
-          state.responseButtons=demo.responseButtons;
-        }else{
-          state.responseButtons=await request('response-buttons','POST',{group:group.id,label,body:text});
-        }
-        if(details.isConnected&&state.view==='responses')renderResponses(group);
-        toast('Кнопку додано');
+        await changeResponseButton(group,entry?'PUT':'POST',editIndex,{label,body:text},details,entries);
       }finally{
         save.disabled=false;
       }

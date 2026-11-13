@@ -59,3 +59,12 @@ button.secondary { background: #334155; color: #f1f5f9; border-color: #475569; }
 }
 .mode-controls { display: flex; flex-wrap: wrap; gap: 8px; }
 .mode-controls button { min-height: 44px; }
+
+.response-manage-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0;
+}
+.response-manage-row b { flex: 1 1 180px; overflow-wrap: anywhere; }

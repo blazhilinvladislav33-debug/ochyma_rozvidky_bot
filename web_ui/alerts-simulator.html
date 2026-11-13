@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="uk">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оповіщення про загрози · Макет</title>
+<style>
+*{box-sizing:border-box}body{margin:0;color:#f1f5f9;background:#111827;font:15px system-ui,sans-serif;display:grid;grid-template-columns:218px minmax(0,1fr);min-height:100vh}
+aside.sidebar{border-right:1px solid #334155;padding:26px 17px}.brand{font-weight:750;letter-spacing:1px;font-size:15px;display:flex;align-items:center;gap:10px;margin-bottom:43px}.logo{display:grid;place-items:center;background:#243b5e;color:#93c5fd;width:40px;height:40px;border-radius:12px;font-size:22px}
+nav div{padding:12px 13px;margin:5px 0;color:#b5c2d4;border-radius:8px}.active{background:#223753;color:#dbeafe;font-weight:700}main{padding:27px 30px}.top,.section-head,.card-foot,.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.top{border-bottom:1px solid #334155;padding-bottom:20px;color:#b5c2d4}.mock{color:#fcd38c;font-size:13px;background:#3a3020;padding:6px 10px;border-radius:6px}
+h1{font-size:32px;margin:24px 0 6px}h2{font-size:20px;margin:0}h3{font-size:17px;margin:0}p{line-height:1.55;margin:7px 0;color:#c5d0df}.intro{margin-bottom:24px;color:#aab8cd}.layout{display:grid;grid-template-columns:minmax(0,2.25fr) minmax(285px,1fr);gap:20px;align-items:start}.events{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+.card,.feed{background:#1e293b;border:1px solid #35455d;border-radius:13px;padding:17px}.card{display:flex;flex-direction:column;gap:12px;min-height:242px}.meta{font-size:12px;color:#a8b8cf}.badge{font-size:11px;font-weight:700;padding:5px 8px;border-radius:6px;white-space:nowrap}.amber{background:#453820;color:#ffdc91}.blue{background:#233e63;color:#b8d9ff}.green{background:#173e37;color:#98ebd1}.last{background:#172233;border-radius:8px;padding:10px 12px;flex:1}.last p{font-size:14px;margin:4px 0 0}.card-foot{flex-wrap:wrap}
+button{font:inherit;font-weight:650;font-size:13px;border:1px solid #475569;color:#f1f5f9;background:#334155;border-radius:8px;padding:10px 12px;min-height:42px}.primary{background:#2563eb;border-color:#2563eb;color:white}.feed h2{margin-bottom:8px}.feed article{border-top:1px solid #35455d;padding:15px 0}.feed article:last-child{padding-bottom:0}.feed h3{font-size:15px;margin-top:5px}.feed p{font-size:13px}.telegram{color:#a5ceff;font-size:13px;font-weight:650}.footnote{font-size:12px;color:#a8b8cf;margin-top:18px}
+@media(max-width:1020px){body{grid-template-columns:175px minmax(0,1fr)}main{padding:20px}.layout{grid-template-columns:1fr}}
+@media(max-width:700px){body{display:block}.sidebar{display:none}.events{grid-template-columns:1fr}}
+
+button{cursor:pointer} button:hover{filter:brightness(1.13)}
+dialog{background:#1e293b;color:#f1f5f9;border:1px solid #475569;border-radius:14px;width:min(92vw,540px);padding:24px}
+dialog::backdrop{background:#030712b8}dialog h2{margin-bottom:16px}
+label{display:block;margin:12px 0}input,textarea{display:block;width:100%;margin-top:6px;padding:10px;background:#111827;color:#f1f5f9;border:1px solid #475569;border-radius:7px;font:inherit}
+dialog footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+#history li{padding:9px 0;white-space:pre-wrap}#status{color:#b7efcd}
+summary{cursor:pointer;color:#c3d9f9;padding:9px 0}
+.closing-actions{border-top:1px solid #35455d}
+.closing-actions button{margin:3px 6px 3px 0}
+#completed-section{margin-top:20px}
+</style>
+<aside class="sidebar"><div class="brand"><span class="logo">◉</span>ОЧИМА<br>РОЗВІДКИ</div><nav><div>Огляд</div><div class="active">Оповіщення про загрози</div><div>Швидкі відповіді</div><div>Публікації</div><div>Шаблони</div><div>Звернення</div><div>Джерела</div></nav></aside>
+<main>
+<header class="top"><span>Панель керування / Оповіщення про загрози</span><span class="mock">СИМУЛЯТОР · ТЕСТОВІ СПОВІЩЕННЯ</span></header>
+<h1>Оповіщення про загрози</h1>
+<p class="intro">Стан загроз, рекомендації для громади та стрічка каналу</p>
+<div class="layout">
+<section>
+<div class="section-head"><h2>Активні сповіщення</h2><button class="primary">＋ Нове сповіщення</button></div>
+<div class="events">
+<article class="card"><div class="card-head"><h3>Повітряна тривога</h3><span class="badge amber">Оголошено</span></div><span class="meta">Сумська громада · Офіційне сповіщення</span><div class="last"><span class="meta">Останній допис · 14:05</span><p>Оголошено повітряну тривогу. Прямуйте до укриття.</p></div><div class="card-foot"><button class="primary">＋ Оновлення</button><button>Історія</button></div></article>
+<article class="card"><div class="card-head"><h3>Небезпечна погода</h3><span class="badge blue">Попередження</span></div><span class="meta">Область · Повідомлення синоптиків</span><div class="last"><span class="meta">Останній допис · 13:48</span><p>Можливі сильні пориви вітру. Уникайте дерев і рекламних конструкцій.</p></div><div class="card-foot"><button class="primary">＋ Оновлення</button><button>Історія</button></div></article>
+<article class="card"><div class="card-head"><h3>Ризик підтоплення</h3><span class="badge green">Підвищений ризик</span></div><span class="meta">Громада · Повідомлення місцевої влади</span><div class="last"><span class="meta">Останній допис · 13:21</span><p>Уникайте підтоплених ділянок. Стежте за повідомленнями громади.</p></div><div class="card-foot"><button class="primary">＋ Оновлення</button><button>Історія</button></div></article>
+</div>
+<p class="footnote">«Оновлення» відкриває чернетку відповіді на останній допис цієї події.</p>
+</section>
+<aside class="feed"><h2>Стрічка каналу</h2><p class="meta">Тестові дописи</p>
+<article><span class="meta">Сьогодні · 14:05</span><h3>Повітряна тривога</h3><p>Оголошено повітряну тривогу в Сумській громаді.</p><span class="telegram">↗ Тестовий допис</span></article>
+<article><span class="meta">Сьогодні · 13:48</span><h3>Попередження про сильний вітер</h3><p>Попередження про сильні пориви вітру.</p><span class="telegram">↗ Тестовий допис</span></article>
+<article><span class="meta">Сьогодні · 13:21</span><h3>Повідомлення про підтоплення</h3><p>Мешканців просять уникати підтоплених ділянок.</p><span class="telegram">↗ Тестовий допис</span></article>
+</aside>
+</div>
+<details id="completed-section"><summary>Завершені сповіщення <span id="completed-count">0</span></summary><div id="completed" class="events"></div></details>
+<p id="status" role="status"></p></main>
+<dialog id="demo-dialog">
+  <h2 id="dialog-title"></h2>
+  <form id="demo-form">
+    <label id="event-name-label">Назва події<input id="event-name" maxlength="70"></label>
+    <p id="reply-context"></p>
+    <label>Текст сповіщення<textarea id="event-text" rows="4" maxlength="500" required></textarea></label>
+    <label id="closing-label">Кнопки завершення, кожна з нового рядка<textarea id="closing-actions" rows="3" maxlength="300"></textarea></label>
+    <footer><button type="button" data-close>Скасувати</button><button class="primary" type="submit">Опублікувати в симуляторі</button></footer>
+  </form>
+  <section id="history-view" hidden><ol id="history"></ol><footer><button type="button" data-close>Закрити</button></footer></section>
+</dialog>
+<script>
+const dialog = document.querySelector('#demo-dialog');
+const form = document.querySelector('#demo-form');
+const historyView = document.querySelector('#history-view');
+const nameLabel = document.querySelector('#event-name-label');
+const nameInput = document.querySelector('#event-name');
+const textInput = document.querySelector('#event-text');
+const context = document.querySelector('#reply-context');
+const events = document.querySelector('.events');
+const feed = document.querySelector('.feed');
+const status = document.querySelector('#status');
+const completed = document.querySelector('#completed');
+const closingLabel = document.querySelector('#closing-label');
+const closingInput = document.querySelector('#closing-actions');
+const cardTemplate = events.firstElementChild.cloneNode(true);
+const storageKey = 'civil-alert-simulator-v2';
+const history = new WeakMap();
+const closingActions = new WeakMap();
+let activeCard = null;
+function openEditor(card) {
+  activeCard = card;
+  document.querySelector('#dialog-title').textContent = card ? 'Оновлення · ' + card.querySelector('h3').textContent : 'Нове тестове сповіщення';
+  nameLabel.hidden = Boolean(card);
+  nameInput.required = !card;
+  nameInput.value = '';
+  closingLabel.hidden = Boolean(card);
+  closingInput.value = 'Завершити';
+  textInput.value = '';
+  context.textContent = card ? 'Відповідь на: ' + card.querySelector('.last p').textContent : '';
+  form.hidden = false;
+  historyView.hidden = true;
+  dialog.showModal();
+}
+function openHistory(card) {
+  document.querySelector('#dialog-title').textContent = 'Історія · ' + card.querySelector('h3').textContent;
+  const list = document.querySelector('#history');
+  list.replaceChildren();
+  for (const post of history.get(card)) {
+    const row = document.createElement('li');
+    row.textContent = post.time + ' · ' + post.text;
+    list.append(row);
+  }
+  form.hidden = true;
+  historyView.hidden = false;
+  dialog.showModal();
+}
+function attach(card, posts=[], actions=['Завершити'], closed=false) {
+  history.set(card, posts);
+  closingActions.set(card, actions);
+  const [update, previous] = card.querySelectorAll('button');
+  update.onclick = () => openEditor(card);
+  previous.onclick = () => openHistory(card);
+  update.hidden = closed;
+  if (!closed) renderClosingActions(card);
+}
+function renderClosingActions(card) {
+  card.querySelector('.closing-actions')?.remove();
+  const group = document.createElement('details');
+  group.className = 'closing-actions';
+  const title = document.createElement('summary');
+  title.textContent = 'Завершення події';
+  group.append(title);
+  for (const label of closingActions.get(card)) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.onclick = () => {
+      if (card.parentElement !== events) return;
+      appendPost(card, label, true);
+      card.querySelector('.badge').textContent = 'Завершено';
+      card.querySelector('.card-foot button').hidden = true;
+      group.remove();
+      completed.prepend(card);
+      updateCompleted();
+      saveDemo();
+      status.textContent = 'Подію переміщено до завершених.';
+    };
+    group.append(button);
+  }
+  const label = document.createElement('label');
+  label.textContent = 'Назви кнопок завершення, кожна з нового рядка';
+  const input = document.createElement('textarea');
+  input.rows = 2;
+  input.maxLength = 300;
+  input.value = closingActions.get(card).join('\n');
+  label.append(input);
+  const save = document.createElement('button');
+  save.type = 'button';
+  save.textContent = 'Зберегти кнопки';
+  save.onclick = () => {
+    closingActions.set(card, parseActions(input.value));
+    renderClosingActions(card);
+    card.querySelector('.closing-actions').open = true;
+    saveDemo();
+  };
+  group.append(label,save);
+  card.append(group);
+}
+function parseActions(value) {
+  const labels = [...new Set(value.split(/\r?\n/).map(line=>line.trim().slice(0,60)).filter(Boolean))].slice(0,5);
+  return labels.length ? labels : ['Завершити'];
+}
+function updateCompleted() {
+  document.querySelector('#completed-count').textContent = completed.children.length;
+}
+function saveDemo() {
+  const cards = [...events.children,...completed.children].map(card=>({
+    title:card.querySelector('h3').textContent,
+    label:card.querySelector('.badge').textContent,
+    meta:card.querySelector('.card-head + .meta').textContent,
+    posts:history.get(card),
+    actions:closingActions.get(card),
+    closed:card.parentElement===completed,
+  }));
+  const entries = [...feed.querySelectorAll('article')].map(item=>
+    ['.meta','h3','p','.telegram'].map(selector=>item.querySelector(selector).textContent));
+  try { localStorage.setItem(storageKey,JSON.stringify({cards,entries})); } catch {}
+}
+function restoreDemo() {
+  let saved;
+  try { saved = JSON.parse(localStorage.getItem(storageKey)); } catch { return; }
+  if (!Array.isArray(saved?.cards) || !Array.isArray(saved?.entries)) return;
+  const feedTemplate = feed.querySelector('article').cloneNode(true);
+  events.replaceChildren();
+  completed.replaceChildren();
+  for (const item of saved.cards) {
+    const card = cardTemplate.cloneNode(true);
+    card.querySelector('h3').textContent = item.title;
+    card.querySelector('.badge').textContent = item.label;
+    card.querySelector('.card-head + .meta').textContent = item.meta;
+    const latest = item.posts.at(-1);
+    card.querySelector('.last .meta').textContent = 'Останній допис · ' + latest.time;
+    card.querySelector('.last p').textContent = latest.text;
+    attach(card,item.posts,item.actions,item.closed);
+    (item.closed ? completed : events).append(card);
+  }
+  feed.querySelectorAll('article').forEach(item=>item.remove());
+  for (const entry of saved.entries) {
+    const item = feedTemplate.cloneNode(true);
+    ['.meta','h3','p','.telegram'].forEach((selector,index)=>{item.querySelector(selector).textContent=entry[index];});
+    feed.append(item);
+  }
+  updateCompleted();
+}
+for (const card of events.children) {
+  attach(card,[],[card.querySelector('h3').textContent==='Повітряна тривога'?'Відбій':'Завершити']);
+  history.get(card).push({time: card.querySelector('.last .meta').textContent.split(' · ').at(-1), text: card.querySelector('.last p').textContent});
+}
+restoreDemo();
+document.querySelector('.section-head button').onclick = () => openEditor(null);
+document.querySelectorAll('[data-close]').forEach(button => button.onclick = () => dialog.close());
+function appendPost(card,text,isReply) {
+  const time = new Intl.DateTimeFormat('uk-UA', {timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'}).format(new Date());
+  history.get(card).push({time,text});
+  card.querySelector('.last .meta').textContent = 'Останній допис · ' + time;
+  card.querySelector('.last p').textContent = text;
+  const item = feed.querySelector('article').cloneNode(true);
+  item.querySelector('.meta').textContent = 'Демо · ' + time;
+  item.querySelector('h3').textContent = card.querySelector('h3').textContent;
+  item.querySelector('p').textContent = text;
+  item.querySelector('.telegram').textContent = isReply ? '↳ Відповідь у цій події' : 'Тестовий допис';
+  feed.querySelector('article').before(item);
+}
+form.onsubmit = event => {
+  event.preventDefault();
+  const text = textInput.value.trim();
+  if (!text || (!activeCard && !nameInput.value.trim())) return;
+  const isReply = Boolean(activeCard);
+  let card = activeCard;
+  if (!card) {
+    card = cardTemplate.cloneNode(true);
+    card.querySelector('h3').textContent = nameInput.value.trim();
+    card.querySelector('.badge').textContent = 'Активне';
+    card.querySelector('.card-head + .meta').textContent = 'Демонстраційна подія';
+    attach(card,[],parseActions(closingInput.value));
+    events.prepend(card);
+  }
+  appendPost(card,text,isReply);
+  saveDemo();
+  dialog.close();
+  status.textContent = 'Тестове сповіщення додано до стрічки.';
+};
+</script>
+</html>
