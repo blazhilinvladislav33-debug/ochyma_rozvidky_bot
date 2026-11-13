@@ -246,13 +246,17 @@ async function getAttachment(message){if(state.demo){toast('Демонстрац
 function preview(){const text=[$('post-header').value,$('body-text').value,$('post-footer').value].filter(Boolean).join('\n\n');$('preview-text').textContent=text||'Тут з’явиться ваш допис.';$('character-count').textContent=$('body-text').value.length+' символів';}
 function mediaList(){const list=$('media-list');list.replaceChildren();state.editor.media.forEach((m,i)=>{const row=el('div','media-item');row.append(el('span','',`${m.kind==='photo'?'▧ Фото':'▷ Відео'} ${i+1}`));if(!state.editor.readonly)row.append(button('×','',()=>{state.editor.media.splice(i,1);mediaList();}));list.append(row);});}
 async function openPost(post){if(!state.demo)post=await request('posts/'+post.id);return openEditor(post,false);}
-function renderResponses(group=null,editIndex=null,manageOpen=false){
+function builtinResponses(group){
+  const overrides=state.responseButtons?.[group.id+'_builtin']||{};
+  return group.items.map((item,index)=>overrides[index]||item);
+}
+function renderResponses(group=null,editIndex=null,manageOpen=false,editBuiltin=false){
   const section=el('section','box box-pad response-picker');
   if(group) section.append(button('← Усі категорії','quiet',()=>renderResponses()));
   section.append(el('h2','',group?.title||'Категорії'));
   const grid=el('div','response-grid');
   if(group){
-    for(const [label,body] of [...group.items,...(state.responseButtons?.[group.id]||[])]){
+    for(const [label,body] of [...builtinResponses(group),...(state.responseButtons?.[group.id]||[])]){
       grid.append(button(label,'secondary',()=>openEditor(null,false,body)));
     }
   }else{
@@ -262,6 +266,15 @@ function renderResponses(group=null,editIndex=null,manageOpen=false){
   }
   section.append(grid);
   if(group&&isAdmin()){
+    const builtins=el('details');
+    builtins.open=editBuiltin;
+    builtins.append(el('summary','','Керувати вбудованими кнопками'));
+    builtinResponses(group).forEach(([label],index)=>{
+      const row=el('div','response-manage-row');
+      row.append(el('b','',label),button('Редагувати','secondary',()=>renderResponses(group,index,false,true)));
+      builtins.append(row);
+    });
+    section.append(builtins);
     const entries=state.responseButtons[group.id]||[];
     if(entries.length){
       const manage=el('details');
@@ -286,7 +299,7 @@ function renderResponses(group=null,editIndex=null,manageOpen=false){
       });
       section.append(manage);
     }
-    section.append(responseButtonForm(group,editIndex));
+    section.append(responseButtonForm(group,editIndex,editBuiltin));
   }
   $('view').replaceChildren(section);
 }
@@ -296,6 +309,11 @@ async function changeResponseButton(group,method,index,fields,element,expected){
   state.responseButtonSaving=true;
   try{
     if(state.demo){
+      if(fields.builtin){
+        const key=group.id+'_builtin';
+        demo.responseButtons={...state.responseButtons,[key]:{...state.responseButtons[key],[index]:[fields.label,fields.body]}};
+        state.responseButtons=demo.responseButtons;
+      }else{
       const entries=[...expected];
       if(method==='DELETE')entries.splice(index,1);
       else if(fields.direction){
@@ -305,6 +323,7 @@ async function changeResponseButton(group,method,index,fields,element,expected){
       else entries.push([fields.label,fields.body]);
       demo.responseButtons={...state.responseButtons,[group.id]:entries};
       state.responseButtons=demo.responseButtons;
+      }
     }else{
       state.responseButtons=await request('response-buttons',method,{group:group.id,index,expected,...fields});
     }
@@ -315,10 +334,11 @@ async function changeResponseButton(group,method,index,fields,element,expected){
   }
 }
 
-function responseButtonForm(group,editIndex){
+function responseButtonForm(group,editIndex,editBuiltin=false){
   const details=el('details');
   const entries=state.responseButtons[group.id]||[];
-  const entry=editIndex===null?null:entries[editIndex];
+  const builtin=builtinResponses(group);
+  const entry=editIndex===null?null:(editBuiltin?builtin:entries)[editIndex];
   details.open=Boolean(entry);
   details.append(el('summary','',entry?'Редагувати кнопку':'＋ Додати кнопку'));
   const form=el('form');
@@ -344,12 +364,16 @@ function responseButtonForm(group,editIndex){
       const label=name.value.trim();
       const text=body.value.trim();
       if(!label||!text)throw Error('Заповніть назву і текст кнопки.');
-      if([...group.items,...entries.filter((_,index)=>index!==editIndex)].some(([value])=>value.toLocaleLowerCase()===label.toLocaleLowerCase())){
+      const otherButtons=editBuiltin
+        ? [...builtin.filter((_,index)=>index!==editIndex),...entries]
+        : [...builtin,...entries.filter((_,index)=>index!==editIndex)];
+      if(otherButtons.some(([value])=>value.toLocaleLowerCase()===label.toLocaleLowerCase())){
         throw Error('Кнопка з такою назвою вже є.');
       }
       save.disabled=true;
       try{
-        await changeResponseButton(group,entry?'PUT':'POST',editIndex,{label,body:text},details,entries);
+        const expected=editBuiltin?(state.responseButtons[group.id+'_builtin']?.[editIndex]||null):entries;
+        await changeResponseButton(group,entry?'PUT':'POST',editIndex,{label,body:text,builtin:editBuiltin},details,expected);
       }finally{
         save.disabled=false;
       }
