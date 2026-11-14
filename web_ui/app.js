@@ -445,6 +445,49 @@ installButtons.forEach(button=>button.addEventListener('click',()=>safe(async()=
 })));
 $('logout').addEventListener('click',()=>safe(async()=>{if(!state.demo)await request('logout','POST',{});state.token='';sessionStorage.removeItem('panel_session');state.demo=false;state.overview=null;showLogin();}));
 document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>safe(()=>navigate(b.dataset.nav))));
+
+const announcementTools=el('details');
+announcementTools.append(el('summary','','Підготувати оголошення в Gemini'));
+const announcementTopic=el('select');
+announcementTopic.setAttribute('aria-label','Тип оголошення');
+for(const [key,label] of [['services','Послуги'],['events','Події'],['community','Життя громади']]){
+  const option=el('option','',label);option.value=key;announcementTopic.append(option);
+}
+const announcementDraft=el('textarea');
+announcementDraft.rows=4;
+announcementDraft.readOnly=true;
+announcementDraft.setAttribute('aria-label','Чернетка Gemini');
+announcementDraft.hidden=true;
+const applyAnnouncement=button('Застосувати чернетку','secondary',()=>{
+  $('body-text').value=announcementDraft.value;
+  preview();
+  announcementTools.open=false;
+});
+applyAnnouncement.hidden=true;
+const generateAnnouncement=button('Підготувати чернетку','secondary',async()=>{
+  if(!$('body-text').value.trim())throw Error('Спершу введіть текст оголошення.');
+  if(state.demo)throw Error('Gemini доступний після підключення сервера.');
+  const editor=state.editor,text=$('body-text').value;
+  generateAnnouncement.disabled=true;
+  try{
+    const data=await request('announcement-draft','POST',{topic:announcementTopic.value,text});
+    if(state.editor!==editor||!$('editor').open||$('body-text').value!==text)return;
+    announcementDraft.value=data.text;
+    announcementDraft.hidden=false;
+    applyAnnouncement.hidden=false;
+  }finally{generateAnnouncement.disabled=false;}
+});
+announcementTools.append(announcementTopic,generateAnnouncement,announcementDraft,applyAnnouncement);
+$('body-text').closest('label').after(announcementTools);
+new MutationObserver(()=>{
+  if($('editor').open){
+    announcementTools.hidden=state.editor.readonly||!isAdmin();
+    announcementTools.open=false;
+    announcementDraft.hidden=true;
+    applyAnnouncement.hidden=true;
+  }
+}).observe($('editor'),{attributes:true,attributeFilter:['open']});
+
 $('new-post').addEventListener('click',()=>safe(()=>openEditor()));$('close-editor').addEventListener('click',()=>{if(!state.busy)$('editor').close();});
 $('editor').addEventListener('cancel',event=>{if(state.busy)event.preventDefault();});
 $('editor-form').addEventListener('submit',event=>{event.preventDefault();editorAction('save');});
